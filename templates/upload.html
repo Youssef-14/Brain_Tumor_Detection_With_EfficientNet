@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Détection de tumeurs cérébrales</title>
+    <link type="text/css" href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet" />
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" crossorigin="anonymous">
+    <style>
+        /* Styles pour la zone de sélection moderne */
+        .file-dropzone {
+            border: 2px dashed #6c757d;
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            background: #fff;
+            transition: background 0.15s ease-in-out, border-color 0.15s ease-in-out;
+        }
+
+        .file-dropzone.dragover {
+            background: #e9f7ff;
+            border-color: #007bff;
+        }
+
+        .file-preview {
+            margin-top: 15px;
+        }
+
+        .file-preview img {
+            max-width: 100%;
+            max-height: 320px;
+            border-radius: 6px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+        }
+
+        .file-info {
+            margin-top: 10px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+
+<body class="bg-light">
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <a class="navbar-brand" href="#">Détection de tumeurs cérébrales</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Basculer la navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item active">
+                    <a class="nav-link" href="./">Accueil <span class="sr-only">(courant)</span></a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    <div class="container mt-auto">
+
+        <form id="upload-form" action="{{ url_for('upload') }}" method="post" enctype="multipart/form-data">
+            <div class="row mt-5">
+                <div class="col-md-2"></div>
+                <div class="col-md-8 justify-content-center center">
+                    <!-- Select models -->
+                    <div class="form-group mt-2">
+                        <label for="model-select">Sélectionner le modèle</label>
+                        <select class="form-control" id="model-select" name="model_name">
+                            {% if model_list and model_list|length > 0 %}
+                                {% for m in model_list %}
+                                    <option value="{{ m }}" {% if default_model and m == default_model %}selected{% endif %}>{{ m }}</option>
+                                {% endfor %}
+                            {% else %}
+                                <option value="">(Aucun fichier modèle trouvé)</option>
+                            {% endif %}
+                        </select>
+                    </div>
+
+                    <h3 class="display-5 text-center">Téléverser une image IRM du cerveau :</h3>
+
+                    <!-- Modern file picker (drag & drop) - garde un input file caché nommé 'file' pour compatibilité -->
+                    <div id="dropzone" class="file-dropzone" tabindex="0">
+                        <div class="dropzone-content">
+                            <p class="mb-1 font-weight-bold">Glisser-déposer votre image ici</p>
+                            <p class="text-muted">ou <button type="button" id="browse-button" class="btn btn-link p-0 align-baseline">parcourir</button> pour sélectionner un fichier</p>
+                            <p class="text-muted small">Formats supportés : jpg, jpeg, png. Max recommandé: 5MB</p>
+                        </div>
+                        <input id="file-picker" type="file" name="file" accept="image/*" style="display:none;" required>
+                        <div id="preview" class="file-preview" style="display:none;">
+                            <div class="file-info text-center">
+                                <div id="file-name" class="text-truncate"></div>
+                            </div>
+                            <div class="text-center mt-2">
+                                <img id="preview-img" src="" alt="Aperçu image" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="msg" class="mt-3"></div>
+
+                    <div class="mt-5">
+                        <button type="submit" class="btn btn-primary btn-lg btn-block col-md-8 mr-auto ml-auto" id="upload-button">Vérifier la présence de tumeur</button>
+                    </div>
+
+                </div>
+                <div class="col-md-2"></div>
+            </div>
+        </form>
+
+    </div>
+    <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" crossorigin="anonymous"></script>
+    <script>
+        (function () {
+            const dropzone = document.getElementById('dropzone');
+            const fileInput = document.getElementById('file-picker');
+            const browseButton = document.getElementById('browse-button');
+            const preview = document.getElementById('preview');
+            const previewImg = document.getElementById('preview-img');
+            const fileNameEl = document.getElementById('file-name');
+            const msgEl = document.getElementById('msg');
+
+            function showPreview(file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    previewImg.src = e.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+                fileNameEl.textContent = file.name;
+            }
+
+            function clearPreview() {
+                previewImg.src = '';
+                preview.style.display = 'none';
+                fileNameEl.textContent = '';
+            }
+
+            dropzone.addEventListener('click', function (e) {
+                fileInput.click();
+            });
+
+            browseButton.addEventListener('click', function (e) {
+                e.preventDefault();
+                fileInput.click();
+            });
+
+            fileInput.addEventListener('change', function (e) {
+                msgEl.innerHTML = '';
+                const f = fileInput.files[0];
+                if (!f) {
+                    clearPreview();
+                    return;
+                }
+                // Simple validation
+                const allowed = ['image/jpeg', 'image/png', 'image/jpg'];
+                if (allowed.indexOf(f.type) === -1) {
+                    msgEl.innerHTML = '<div class="alert alert-danger">Type de fichier non supporté.</div>';
+                    fileInput.value = '';
+                    clearPreview();
+                    return;
+                }
+                // Size check (5MB)
+                if (f.size > 5 * 1024 * 1024) {
+                    msgEl.innerHTML = '<div class="alert alert-warning">Fichier trop volumineux (max 5MB recommandé).</div>';
+                }
+                showPreview(f);
+            });
+
+            // Drag & drop handlers
+            dropzone.addEventListener('dragover', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                dropzone.classList.add('dragover');
+            });
+
+            dropzone.addEventListener('dragleave', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                dropzone.classList.remove('dragover');
+            });
+
+            dropzone.addEventListener('drop', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                dropzone.classList.remove('dragover');
+                const dt = e.dataTransfer;
+                if (dt && dt.files && dt.files.length) {
+                    fileInput.files = dt.files; // affecte au champ file pour que le formulaire envoie le fichier
+                    const f = fileInput.files[0];
+                    fileInput.dispatchEvent(new Event('change'));
+                }
+            });
+
+            // Accessibility: handle keyboard Enter/Space to open file dialog
+            dropzone.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    fileInput.click();
+                }
+            });
+
+        })();
+    </script>
+</body>
+
+</html>

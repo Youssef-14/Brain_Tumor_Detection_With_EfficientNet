@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Détection de tumeurs cérébrales - Résultat</title>
+    <link type="text/css" href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet" />
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" crossorigin="anonymous">
+</head>
+
+<body class="bg-light">
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <a class="navbar-brand" href="#">Détection de tumeurs cérébrales</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Basculer la navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item active">
+                    <a class="nav-link" href="./">Accueil <span class="sr-only">(courant)</span></a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    <div class="container" style="padding-top: 5%; padding-bottom: 5%;">
+
+        <h3 class="text-center display-3 mt-3 mb-3">Résultat</h3>
+
+        <img src="../images/{{ image_name }}" height="300px" class="image-responsive align-center" style="display: block; margin-left: auto; margin-right: auto; width: 25%;">
+
+        <p class="text-center mt-3">Modèle utilisé : <strong>{{ model_name or 'par défaut' }}</strong></p>
+
+        {% set default_labels = ['glioma_tumor','meningioma_tumor','no_tumor','pituitary_tumor'] %}
+        {% if predvalue and predvalue.mode == 'multiclass' %}
+            {% set labels = predvalue.labels if predvalue.get('labels') else default_labels %}
+            <h4 class="text-center display-5 pt-3">Prédiction : <span style="color:crimson;">{{ predvalue.label }}</span></h4>
+            <div class="row justify-content-center mt-4">
+                <div class="col-md-6">
+                    <ul class="list-group">
+                        {% for idx in range(labels|length) %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                {{ labels[idx] }}
+                                <span class="badge badge-primary badge-pill">{{ '%.2f' % (predvalue.probs[idx]*100) }}%</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        {% elif predvalue and predvalue.mode == 'binary' %}
+            {% if predvalue.prediction %}
+                <h4 class="text-left display-5 text-center pt-3">Résultat : <span style="color:red;">Tumeur cérébrale détectée !!!</span></h4>
+            {% else %}
+                <h4 class="text-left display-5 text-center pt-3">Résultat : <span style="color:green;">Pas de tumeur cérébrale</span></h4>
+            {% endif %}
+            <p class="text-center">Score : {{ '%.3f' % (predvalue.score) }}</p>
+        {% else %}
+            <!-- Fallback si format inattendu -->
+            {% if predvalue %}
+                <h4 class="text-center pt-3">Résultat : <strong>{{ predvalue }}</strong></h4>
+            {% else %}
+                <h4 class="text-center pt-3">Aucun résultat de prédiction disponible.</h4>
+            {% endif %}
+        {% endif %}
+
+    </div>
+    <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" crossorigin="anonymous"></script>
+</body>
+
+</html>

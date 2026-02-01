@@ -1,0 +1,80 @@
+# Git ignore pour le projet Brain Tumor Detection (Flask)
+# Ignorer les caches Python, environnements virtuels, fichiers temporaires, IDE et gros fichiers de modèles
+
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Virtual environments
+env/
+venv/
+.venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# IDEs
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs and databases
+*.log
+*.sqlite3
+
+# Environment variables
+.env
+
+# pip
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage
+.coverage
+.tox/
+.pytest_cache/
+
+# MyPy
+.mypy_cache/
+
+# Jupyter
+.ipynb_checkpoints
+
+
+# Modèles et gros binaires (ne pas suivre les fichiers de poids)
+models/*.h5
+models/*.keras
+notebooks/models/*.h5
+notebooks/models/*.keras
+*.hdf5
+*.ckpt
+*.pt
+*.pth
+
+# Compiled python files
+*.pyc
+
+# Uploaded files / runtime uploads
+static/uploads/
+uploads/
+
+# Exclude local secrets or keys
+secrets.json
+
+# End of .gitignore
+
