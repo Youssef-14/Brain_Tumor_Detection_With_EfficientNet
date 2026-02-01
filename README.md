@@ -1,4 +1,4 @@
-# Brain Tumor Detection | Web App Demo (Flask) | Team Delta
+# Brain Tumor Detection | Web App Demo (Flask)
 Brain Tumor Detection using Web App (Flask) that can classify if patient has meningioma tumor, glioma tumor, pituitary tumor or no tumor at all from MRI scan images using Deep Learning (CNN).
 
 ## Team Members
